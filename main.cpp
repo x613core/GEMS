@@ -17,12 +17,7 @@ int main()
                 gems.selectBlock(mouseEvent->position);
         }
 
-        do
-        {
-            gems.update();
-            gems.draw();
-            gems.window.display();
-        } while (gems.canDrop() || gems.canCheck());
+        gems.update();
     }
     return 0;
 }

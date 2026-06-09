@@ -13,8 +13,13 @@ protected:
     std::list<sf::Vector2i> needToDrop;
     std::list<sf::Vector2i> needToCheck;
 
-    bool _isChecked;
-    bool _isDroped;
+    void resetSelectedBlock();
+    void makeMove(sf::Vector2i blockA, sf::Vector2i blockB);
+    void checkBlock(sf::Vector2i block);
+    bool canDrop();
+    bool canCheck();
+    void dropAll();
+    void checkAll();
 
 public:
     sf::RenderWindow window;
@@ -25,14 +30,8 @@ public:
     void update();
     void init();
 
-    void resetSelectedBlock();
+    void displayWithDelay(int deleyMiliseconds);
     void selectBlock(sf::Vector2i mousePosition);
-    void makeMove(sf::Vector2i blockA, sf::Vector2i blockB);
-    void checkBlock(sf::Vector2i block);
-    bool canDrop();
-    bool canCheck();
-    void dropAll();
-    void checkAll();
 };
 
 #endif

@@ -4,10 +4,8 @@ Gems::Gems()
 {
     score = 0;
     selected_block = sf::Vector2i(-1, -1);
-    font.openFromFile(FONT_FILE);
-
-    _isChecked = 0;
-    _isDroped = 1;
+    std::filesystem::path p = __FILE__;
+    int isOpend = font.openFromFile(p.parent_path().string() + "/" FONT_FILE);
 }
 
 void Gems::draw()
@@ -25,27 +23,34 @@ void Gems::draw()
 
 void Gems::update()
 {
-    if (!_isDroped)
+    while (canCheck() || canDrop())
     {
-        dropAll();
+        /*std::ofstream file("log.txt", std::ios::app);
+        for (auto elem : needToCheck)
+            file << "(" << elem.x << ";" << elem.y << ") ";
+        file << std::endl;
+        file.close();*/
 
-        _isChecked = 0;
-        _isDroped = 1;
-    }
-    else if (!_isChecked)
-    {
         checkAll();
-
-        _isDroped = 0;
-        _isChecked = 1;
+        displayWithDelay(DELTA_TIME);
+        dropAll();
+        displayWithDelay(DELTA_TIME);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(DELTA_TIME));
+    displayWithDelay(0);
 }
 
 void Gems::init()
 {
     window.create(sf::VideoMode(sf::Vector2u(900, 900)), "GEMS");
+}
+
+void Gems::displayWithDelay(int deleyMiliseconds)
+{
+    draw();
+    window.display();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(deleyMiliseconds));
 }
 
 void Gems::resetSelectedBlock()
@@ -77,8 +82,6 @@ void Gems::makeMove(sf::Vector2i blockA, sf::Vector2i blockB)
     field.flipBlocks(blockA, blockB);
     needToCheck.push_back(blockA);
     needToCheck.push_back(blockB);
-    // checkBlock(blockA);
-    // checkBlock(blockB);
 }
 
 void Gems::checkBlock(sf::Vector2i block)
@@ -90,7 +93,7 @@ void Gems::checkBlock(sf::Vector2i block)
 
     if (withSameColor >= DESTROY_AMOUNT)
     {
-        field.destroy(block);
+        field.destroy(block, &needToDrop);
 
         score += withSameColor;
         needToDrop.push_back(block);
@@ -112,7 +115,15 @@ void Gems::dropAll()
     for (auto element : needToDrop)
     {
         field.drop(element);
-        needToCheck.push_back(element);
+
+        while (isBlockInField(element))
+        {
+            auto i = std::find(needToCheck.begin(), needToCheck.end(), element);
+            if (i == needToCheck.end())
+                needToCheck.push_back(element);
+
+            element.y--;
+        }
     }
     needToDrop.clear();
 }

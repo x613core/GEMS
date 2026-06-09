@@ -13,7 +13,7 @@ public:
     void clickBlock(int i, int j);
     void flipBlocks(sf::Vector2i first, sf::Vector2i second);
     int sameColorCount(sf::Vector2i start);
-    void destroy(sf::Vector2i start);
+    void destroy(sf::Vector2i start, std::list<sf::Vector2i> *needToDrop);
     void drop(sf::Vector2i start);
     bool needToCheck(sf::Vector2i block);
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const;

@@ -37,7 +37,7 @@ int Field::sameColorCount(sf::Vector2i start)
     return result;
 }
 
-void Field::destroy(sf::Vector2i start)
+void Field::destroy(sf::Vector2i start, std::list<sf::Vector2i> *needToDrop)
 {
     auto block = &blocks[start.x][start.y];
     block->colorIsChecked = 1;
@@ -54,12 +54,13 @@ void Field::destroy(sf::Vector2i start)
     {
         Block current = blocks[neightbour.x][neightbour.y];
         if (isBlockInField(neightbour) && !current.colorIsChecked && block->sameColor(current))
-            destroy(neightbour);
+            destroy(neightbour, needToDrop);
     }
 
     block->colorIsChecked = 0;
     Block destroedBlock = DestroedBlock();
     blocks[start.x][start.y] = destroedBlock;
+    (*needToDrop).push_back(start);
 }
 
 void Field::drop(sf::Vector2i start)
