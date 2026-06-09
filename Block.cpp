@@ -2,7 +2,11 @@
 
 sf::Color getRandomColor()
 {
-    int rand_index = rand() % COLORS_COUNT;
+    std::random_device rand;
+    std::mt19937 gen(rand());
+    std::uniform_int_distribution<int> distrib(0, COLORS_COUNT - 1);
+    int rand_index = distrib(gen);
+
     return COLORS[rand_index];
 }
 

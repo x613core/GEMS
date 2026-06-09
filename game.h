@@ -4,6 +4,7 @@
 #include <list>
 #include <chrono>
 #include <thread>
+#include <random>
 #include <SFML/Graphics.hpp>
 
 #define FONT_FILE "Samson.ttf"
@@ -33,5 +34,6 @@ const sf::Color COLORS[COLORS_COUNT] = {
 
 #include "Block.h"
 #include "DestroedBlock.h"
+#include "Bonus.h"
 #include "Field.h"
 #include "Gems.h"

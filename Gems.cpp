@@ -25,12 +25,6 @@ void Gems::update()
 {
     while (canCheck() || canDrop())
     {
-        /*std::ofstream file("log.txt", std::ios::app);
-        for (auto elem : needToCheck)
-            file << "(" << elem.x << ";" << elem.y << ") ";
-        file << std::endl;
-        file.close();*/
-
         checkAll();
         displayWithDelay(DELTA_TIME);
         dropAll();
@@ -131,18 +125,7 @@ void Gems::dropAll()
 void Gems::checkAll()
 {
     for (auto element : needToCheck)
-    {
         checkBlock(element);
-        sf::Vector2i neightbours[4] = {
-            sf::Vector2i(element.x - 1, element.y),
-            sf::Vector2i(element.x + 1, element.y),
-            sf::Vector2i(element.x, element.y - 1),
-            sf::Vector2i(element.x, element.y + 1)};
-
-        for (auto neightbour : neightbours)
-            if (field.needToCheck(neightbour))
-                checkBlock(neightbour);
-    }
 
     needToCheck.clear();
 }
