@@ -1,38 +1,28 @@
 #include "game.h"
 
-#define MAKE_FRAME_STEP                                                 \
-    std::this_thread::sleep_for(std::chrono::milliseconds(DELTA_TIME)); \
-    window.clear();                                                     \
-    window.draw(game);                                                  \
-    window.display();
-
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(900, 900)), "GEMS");
-    Game game;
+    Gems gems;
+    gems.init();
 
-    while (window.isOpen())
+    while (gems.window.isOpen())
     {
-        while (const auto event = window.pollEvent())
+        while (const auto event = gems.window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
-                window.close();
+                gems.window.close();
 
             auto mouseEvent = event->getIf<sf::Event::MouseButtonPressed>();
             if (mouseEvent)
-                game.selectBlock(mouseEvent->position);
+                gems.selectBlock(mouseEvent->position);
         }
 
-        window.clear();
-        window.draw(game);
-        window.display();
-        while (game.canDrop())
+        do
         {
-            game.dropAll();
-            MAKE_FRAME_STEP
-            game.checkAll();
-            MAKE_FRAME_STEP
-        }
+            gems.update();
+            gems.draw();
+            gems.window.display();
+        } while (gems.canDrop() || gems.canCheck());
     }
     return 0;
 }

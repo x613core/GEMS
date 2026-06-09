@@ -1,52 +1,4 @@
-#include "game.h"
-
-sf::Color getRandomColor()
-{
-    int rand_index = rand() % COLORS_COUNT;
-    return COLORS[rand_index];
-}
-
-Block::Block()
-{
-    isSelected = 0;
-    colorIsChecked = 0;
-    needToCheck = 0;
-    isDestroed = 0;
-    color = getRandomColor();
-}
-
-void Block::click()
-{
-    isSelected = !isSelected;
-}
-
-bool Block::sameColor(Block block)
-{
-    return block.color == color;
-}
-
-void Block::draw(sf::RenderTarget &target, sf::RenderStates states) const
-{
-    states.transform *= getTransform();
-
-    sf::RectangleShape block(sf::Vector2f(BLOCK_SIZE - 2 * FRAME_SIZE, BLOCK_SIZE - 2 * FRAME_SIZE));
-    block.setFillColor(color);
-
-    block.setOutlineColor(color);
-    if (isSelected)
-        block.setOutlineColor(HIGHLIGHT_COLOR);
-    block.setOutlineThickness(FRAME_SIZE);
-
-    target.draw(block, states);
-}
-
-DestroedBlock::DestroedBlock()
-{
-    color = sf::Color::Black;
-    isDestroed = 1;
-    colorIsChecked = 0;
-    needToCheck = 0;
-}
+#include "Field.h"
 
 void Field::clickBlock(int i, int j)
 {
@@ -166,13 +118,6 @@ void Field::draw(sf::RenderTarget &target, sf::RenderStates states) const
     }
 }
 
-Game::Game()
-{
-    score = 0;
-    selected_block = sf::Vector2i(-1, -1);
-    font.openFromFile(FONT_FILE);
-}
-
 sf::Vector2i convertMousePosToBlock(sf::Vector2i mousePosition)
 {
     int i = mousePosition.x / BLOCK_SIZE - 1;
@@ -206,90 +151,4 @@ bool areNeightbours(sf::Vector2i blockA, sf::Vector2i blockB)
             return true;
 
     return false;
-}
-
-void Game::resetSelectedBlock()
-{
-    field.clickBlock(selected_block.x, selected_block.y);
-    selected_block = sf::Vector2i(-1, -1);
-}
-
-void Game::selectBlock(sf::Vector2i mousePosition)
-{
-    auto currentBlock = convertMousePosToBlock(mousePosition);
-
-    if (isBlockInField(currentBlock))
-    {
-        auto selectedBlock = selected_block;
-        resetSelectedBlock();
-        if (areNeightbours(selectedBlock, currentBlock))
-            makeMove(selectedBlock, currentBlock);
-        else if (selectedBlock != currentBlock)
-        {
-            selected_block = currentBlock;
-            field.clickBlock(currentBlock.x, currentBlock.y);
-        }
-    }
-}
-
-void Game::makeMove(sf::Vector2i blockA, sf::Vector2i blockB)
-{
-    field.flipBlocks(blockA, blockB);
-    checkBlock(blockA);
-    checkBlock(blockB);
-}
-
-void Game::checkBlock(sf::Vector2i block)
-{
-    int withSameColor = field.sameColorCount(block);
-
-    if (withSameColor >= DESTROY_AMOUNT)
-    {
-        field.destroy(block);
-
-        score += withSameColor;
-        needToDrop.push_back(block);
-    }
-}
-
-bool Game::canDrop()
-{
-    return needToDrop.size() != 0;
-}
-
-void Game::dropAll()
-{
-    for (auto element : needToDrop)
-    {
-        field.drop(element);
-        needToCheck.push_back(element);
-    }
-    needToDrop.clear();
-}
-
-void Game::checkAll()
-{
-    for (auto element : needToCheck)
-    {
-        checkBlock(element);
-        sf::Vector2i neightbours[4] = {
-            sf::Vector2i(element.x - 1, element.y),
-            sf::Vector2i(element.x + 1, element.y),
-            sf::Vector2i(element.x, element.y - 1),
-            sf::Vector2i(element.x, element.y + 1)};
-
-        for (auto neightbour : neightbours)
-            if (field.needToCheck(neightbour))
-                checkBlock(neightbour);
-    }
-}
-
-void Game::draw(sf::RenderTarget &target, sf::RenderStates states) const
-{
-    states.transform *= getTransform();
-    sf::Text text(font, "Score: " + std::to_string(score));
-    text.setFillColor(sf::Color::White);
-    target.draw(text, states);
-    states.transform.translate(sf::Vector2f(BLOCK_SIZE, BLOCK_SIZE));
-    target.draw(field, states);
 }
