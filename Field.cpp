@@ -87,7 +87,8 @@ void Field::drop(sf::Vector2i start)
 
     };
     for (auto element : neightbours)
-        drop(element);
+        if (isBlockInField(element))
+            drop(element);
 
     blocks[start.x][start.y].needToCheck = 1;
 }

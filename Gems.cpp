@@ -49,8 +49,11 @@ void Gems::displayWithDelay(int deleyMiliseconds)
 
 void Gems::resetSelectedBlock()
 {
-    field.clickBlock(selected_block.x, selected_block.y);
-    selected_block = sf::Vector2i(-1, -1);
+    if (selectBlock != sf::Vector2i(-1, -1))
+    {
+        field.clickBlock(selected_block.x, selected_block.y);
+        selected_block = sf::Vector2i(-1, -1);
+    }
 }
 
 void Gems::selectBlock(sf::Vector2i mousePosition)
