@@ -1,5 +1,10 @@
 #include "Field.h"
 
+Field::Field()
+{
+    selected_block = sf::Vector2i(-1, -1);
+}
+
 void Field::clickBlock(int i, int j)
 {
     blocks[i][j].click();
@@ -37,7 +42,7 @@ int Field::sameColorCount(sf::Vector2i start)
     return result;
 }
 
-void Field::destroy(sf::Vector2i start, std::list<sf::Vector2i> *needToDrop)
+void Field::destroy(sf::Vector2i start)
 {
     auto block = &blocks[start.x][start.y];
     block->colorIsChecked = 1;
@@ -54,13 +59,13 @@ void Field::destroy(sf::Vector2i start, std::list<sf::Vector2i> *needToDrop)
     {
         Block current = blocks[neightbour.x][neightbour.y];
         if (isBlockInField(neightbour) && !current.colorIsChecked && block->sameColor(current))
-            destroy(neightbour, needToDrop);
+            destroy(neightbour);
     }
 
     block->colorIsChecked = 0;
     Block destroedBlock = DestroedBlock();
     blocks[start.x][start.y] = destroedBlock;
-    (*needToDrop).push_back(start);
+    needToDrop.push_back(start);
 }
 
 void Field::drop(sf::Vector2i start)
@@ -93,14 +98,100 @@ void Field::drop(sf::Vector2i start)
     blocks[start.x][start.y].needToCheck = 1;
 }
 
-bool Field::needToCheck(sf::Vector2i block)
+int Field::checkBlock(sf::Vector2i block)
 {
+    int score = 0;
     if (!isBlockInField(block))
         return 0;
 
-    bool result = blocks[block.x][block.y].needToCheck;
-    blocks[block.x][block.y].needToCheck = 0;
-    return result;
+    int withSameColor = sameColorCount(block);
+
+    if (withSameColor >= DESTROY_AMOUNT)
+    {
+        destroy(block);
+
+        score += withSameColor;
+        needToDrop.push_back(block);
+    }
+    return score;
+}
+
+bool Field::canDrop()
+{
+    return needToDrop.size() != 0;
+}
+
+bool Field::canCheck()
+{
+    return needToCheck.size() != 0;
+}
+
+void Field::dropAll()
+{
+    for (auto element : needToDrop)
+    {
+        drop(element);
+
+        while (isBlockInField(element))
+        {
+            auto i = std::find(needToCheck.begin(), needToCheck.end(), element);
+            if (i == needToCheck.end())
+                needToCheck.push_back(element);
+
+            element.y--;
+        }
+    }
+    needToDrop.clear();
+}
+
+int Field::checkAll()
+{
+    int score = 0;
+    for (auto element : needToCheck)
+        score += checkBlock(element);
+
+    needToCheck.clear();
+    return score;
+}
+
+void Field::resetSelectedBlock()
+{
+    if (selected_block != sf::Vector2i(-1, -1))
+    {
+        clickBlock(selected_block.x, selected_block.y);
+        selected_block = sf::Vector2i(-1, -1);
+    }
+}
+
+void Field::selectBlock(sf::Vector2i mousePosition)
+{
+    auto currentBlock = convertMousePosToBlock(mousePosition);
+
+    if (isBlockInField(currentBlock))
+    {
+        auto selectedBlock = selected_block;
+        resetSelectedBlock();
+        if (areNeightbours(selectedBlock, currentBlock))
+            makeMove(selectedBlock, currentBlock);
+        else if (selectedBlock != currentBlock)
+        {
+            selected_block = currentBlock;
+            clickBlock(currentBlock.x, currentBlock.y);
+        }
+    }
+}
+
+void Field::makeMove(sf::Vector2i blockA, sf::Vector2i blockB)
+{
+    flipBlocks(blockA, blockB);
+    needToCheck.push_back(blockA);
+    needToCheck.push_back(blockB);
+}
+
+void Field::animateChange(sf::RenderWindow *window)
+{
+    window->draw(*this);
+    std::this_thread::sleep_for(std::chrono::milliseconds(DELTA_TIME));
 }
 
 void Field::draw(sf::RenderTarget &target, sf::RenderStates states) const

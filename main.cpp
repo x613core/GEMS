@@ -2,22 +2,10 @@
 
 int main()
 {
-    Gems gems;
-    gems.init();
+    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(WINDOW_SIZE, WINDOW_SIZE)), "GEMS");
 
-    while (gems.window.isOpen())
-    {
-        while (const auto event = gems.window.pollEvent())
-        {
-            if (event->is<sf::Event::Closed>())
-                gems.window.close();
+    Gems gems(&window);
+    gems.run();
 
-            auto mouseEvent = event->getIf<sf::Event::MouseButtonPressed>();
-            if (mouseEvent)
-                gems.selectBlock(mouseEvent->position);
-        }
-
-        gems.update();
-    }
     return 0;
 }

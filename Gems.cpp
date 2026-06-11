@@ -1,134 +1,73 @@
 #include "Gems.h"
 
-Gems::Gems()
+Gems::Gems(sf::RenderWindow *window)
 {
     score = 0;
-    selected_block = sf::Vector2i(-1, -1);
+    newClick = 0;
+    this->window = window;
+    lastClickPosition = sf::Vector2i(-1, -1);
     std::filesystem::path p = __FILE__;
     int isOpend = font.openFromFile(p.parent_path().string() + "/" FONT_FILE);
 }
 
-void Gems::draw()
+void Gems::drawAndDisplay(bool needToAnimate)
 {
-    window.clear(sf::Color::Black);
+    window->clear(sf::Color::Black);
 
     sf::Text text(font, "Score: " + std::to_string(score));
     text.setFillColor(sf::Color::White);
     text.setPosition(sf::Vector2f(0, 0));
-    window.draw(text);
+    window->draw(text);
 
     field.setPosition(sf::Vector2f(BLOCK_SIZE, BLOCK_SIZE));
-    window.draw(field);
+    if (needToAnimate)
+        field.animateChange(window);
+    else
+        window->draw(field);
+
+    window->display();
 }
 
 void Gems::update()
 {
-    while (canCheck() || canDrop())
+    if (newClick)
     {
-        checkAll();
-        displayWithDelay(DELTA_TIME);
-        dropAll();
-        displayWithDelay(DELTA_TIME);
+        field.selectBlock(lastClickPosition);
+        newClick = 0;
+        drawAndDisplay();
     }
 
-    displayWithDelay(0);
-}
-
-void Gems::init()
-{
-    window.create(sf::VideoMode(sf::Vector2u(900, 900)), "GEMS");
-}
-
-void Gems::displayWithDelay(int deleyMiliseconds)
-{
-    draw();
-    window.display();
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(deleyMiliseconds));
-}
-
-void Gems::resetSelectedBlock()
-{
-    if (selectBlock != sf::Vector2i(-1, -1))
+    while (field.canCheck() || field.canDrop())
     {
-        field.clickBlock(selected_block.x, selected_block.y);
-        selected_block = sf::Vector2i(-1, -1);
+        score += field.checkAll();
+        drawAndDisplay(1);
+        field.dropAll();
+        drawAndDisplay(1);
     }
+
+    drawAndDisplay();
 }
 
-void Gems::selectBlock(sf::Vector2i mousePosition)
+void Gems::run()
 {
-    auto currentBlock = convertMousePosToBlock(mousePosition);
-
-    if (isBlockInField(currentBlock))
+    while (window->isOpen())
     {
-        auto selectedBlock = selected_block;
-        resetSelectedBlock();
-        if (areNeightbours(selectedBlock, currentBlock))
-            makeMove(selectedBlock, currentBlock);
-        else if (selectedBlock != currentBlock)
+        while (const auto event = window->pollEvent())
         {
-            selected_block = currentBlock;
-            field.clickBlock(currentBlock.x, currentBlock.y);
+            if (event->is<sf::Event::Closed>())
+                window->close();
+
+            auto mouseEvent = event->getIf<sf::Event::MouseButtonPressed>();
+            if (mouseEvent)
+                setLastClickPos(mouseEvent->position);
         }
+
+        update();
     }
 }
 
-void Gems::makeMove(sf::Vector2i blockA, sf::Vector2i blockB)
+void Gems::setLastClickPos(sf::Vector2i pos)
 {
-    field.flipBlocks(blockA, blockB);
-    needToCheck.push_back(blockA);
-    needToCheck.push_back(blockB);
-}
-
-void Gems::checkBlock(sf::Vector2i block)
-{
-    if (!isBlockInField(block))
-        return;
-
-    int withSameColor = field.sameColorCount(block);
-
-    if (withSameColor >= DESTROY_AMOUNT)
-    {
-        field.destroy(block, &needToDrop);
-
-        score += withSameColor;
-        needToDrop.push_back(block);
-    }
-}
-
-bool Gems::canDrop()
-{
-    return needToDrop.size() != 0;
-}
-
-bool Gems::canCheck()
-{
-    return needToCheck.size() != 0;
-}
-
-void Gems::dropAll()
-{
-    for (auto element : needToDrop)
-    {
-        field.drop(element);
-
-        while (isBlockInField(element))
-        {
-            auto i = std::find(needToCheck.begin(), needToCheck.end(), element);
-            if (i == needToCheck.end())
-                needToCheck.push_back(element);
-
-            element.y--;
-        }
-    }
-    needToDrop.clear();
-}
-
-void Gems::checkAll()
-{
-    for (auto element : needToCheck)
-        checkBlock(element);
-
-    needToCheck.clear();
+    newClick = 1;
+    lastClickPosition = pos;
 }
